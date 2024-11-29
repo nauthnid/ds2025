@@ -1,0 +1,331 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc} % 
+\usepackage[T5]{fontenc} % Font Vietnamese
+\usepackage{graphicx} % Figure
+\usepackage{float} % Set position figure or table
+\usepackage{mathptmx} % select font Times New Roman
+\usepackage{geometry} % Set parameters paper
+\usepackage{xcolor}
+\usepackage[fontsize=13pt]{scrextend} % set font size = 13pt
+\usepackage{indentfirst} % Indent first line
+\usepackage{microtype}
+\usepackage{titling}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{url}
+\begin{document}
+
+% CREATE COVER PAGE  
+\begin{center}
+    \vspace{12pt} % line spacing
+        \textbf{\fontsize{15pt}{0pt} \selectfont{} UNIVERSITY OF SCIENCE AND TECHNOLOGY OF HANOI}
+    \vspace{0.5cm}
+
+% LOGO
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=8cm, height=4cm]{logo USTH.png}
+\end{figure}
+
+% THESIS TYPE
+\vspace{48pt}
+        \fontsize{26pt}{0pt}{\fontfamily{qag}\selectfont{} \textbf{DISTRIBUTED SYSTEMS}
+}
+\vspace{24pt}
+
+% THESIS TITTLE
+        \fontsize{17pt}{0pt}{\fontfamily{qag}\selectfont{} \textbf{PRACTICAL WORK 1 - TCP FILE TRANSFER}}
+\vspace{18pt}
+
+% NAME
+        \fontsize{14pt}{0pt}\selectfont{} \textbf{HA DINH TUAN}
+    \vspace{3pt}
+
+% ID
+        \fontsize{14pt}{0pt}\selectfont{} BA12-183
+    \vspace{3pt}
+
+% EMAIL    
+        \fontsize{12pt}{0pt}\selectfont{} tuanhd.ba12-183@st.usth.edu.vn
+    \vspace{12pt} % line spacing
+
+% MAJOR
+        \fontsize{14pt}{0pt}\selectfont{} \textbf{CYBER SECURITY} 
+
+\end{center}
+    \vspace{48pt}
+
+% INFORMATION: SUPERVISOR NAME, STUDENT NAME,...
+\begin{table}[H]
+    \centering
+        \begin{tabular}{l l c}
+            \textbf{Lecturer:}    &  Le Nhu Chu Hiep \vspace{6pt} &  \\
+        \end{tabular}
+\end{table}
+
+% TIME
+\begin{center}
+    \vspace{48pt}
+    \fontsize{14pt}{0pt}\selectfont{} \textbf{Hanoi, November 2024}
+\end{center}
+
+% CREATE A NEW PAGE AND REMOVE PAGE NUMBER
+\thispagestyle{empty}
+    \newpage
+
+\thispagestyle{empty}
+    \newpage
+
+\section{Introduction}
+The objective of this practical work was to develop a file transfer system using TCP/IP with a client-server architecture. The system is made up of a server and a client that communicate through sockets.
+
+\section{Protocol design}
+\subsection{Overview of the protocol}
+The File Transfer Protocol (FTP) is created to provide a reliable, efficient, and secure method for transferring files between a client and a server over a TCP/IP network. It utilizes two distinct connections: one for control commands (the control connection) and another for transferring file data (the data connection).
+
+\subsection{Steps in protocol design}
+The file transfer protocol is organized as follows:
+
+\begin{enumerate}
+    \item \textbf{Connection establishment:} The client connects to the server using a specific IP address and port, while the server listens to and accepts the incoming connection.
+    \item \textbf{File metadata:} The client sends the file name and size to the server, which then acknowledges that it is prepared to receive the file.
+    \item \textbf{File transfer:} The client transmits the file in chunks, and the server receives and writes the data, sending an acknowledgment ("ACK") for each received chunk.
+    \item \textbf{Acknowledgment:} After each chunk is received, the server sends a confirmation back to the client to indicate successful receipt.
+    \item \textbf{Completion:} Once all chunks have been transferred, the server notifies the client that the transfer is complete.
+    \item \textbf{Connection closure:} After the transfer is completed, both the client and the server close the control and data connections.
+\end{enumerate}
+
+\thispagestyle{empty}
+    \newpage
+
+\subsection{Figure design protocol}
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=1\textwidth]{protocol.png}
+    \caption{FTP design}
+    \label{fig:ftp_des}
+\end{figure}
+
+\section{Systems organization}
+
+\subsection{System architecture}
+The system is designed using a "Client-Server" architecture, where the "Client" initiates the connection and sends a file to the "Server." The two primary components of the system are the "Client" and the "Server," which communicate via a TCP connection. Below is a detailed description of the system architecture:
+
+\begin{itemize}
+    \item Client: \begin{itemize}
+        \item The client begins the file transfer by establishing a TCP connection with the server.
+        \item It first sends the file metadata (such as name and size), followed by the file data in chunks.
+        \item The client waits for an acknowledgment (ACK) from the server after each chunk to ensure the data is transferred reliably.
+        \item Once the entire file has been successfully sent, the client closes the connection.
+    \end{itemize}
+
+    \item Server: \begin{itemize}
+        \item The server listens for incoming connections on a pre-defined port.
+        \item After the connection is established, it receives the file metadata and prepares to receive the file.
+        \item The server receives the file data in chunks and writes it to a file.
+        \item After receiving each chunk, the server sends an acknowledgment (ACK) to the client to confirm successful receipt.
+        \item When the entire file has been received, the server indicates the completion of the transfer and closes the connection.
+    \end{itemize}
+\end{itemize}
+
+\thispagestyle{empty}
+    \newpage
+
+
+\section{File transfer implementation}
+
+\subsection{Client code}
+This Python program implements a simple client that can upload and download files to/from a server using TCP/IP. The client connects to the server, allows the user to choose between uploading or downloading a file, and handles file transfers in chunks. The client interacts with the server via socket communication and follows a menu-based interface.
+\thispagestyle{empty}
+    \newpage
+    
+\begin{lstlisting}[language=Python]
+import socket
+import os
+
+def connect_to_server():
+    SERVER_IP = input("Enter IP address of server: ") 
+    PORT = int(input("Enter port of server: "))  
+
+    try:
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.connect((SERVER_IP, PORT))
+        print(f"Connected to server at {SERVER_IP}:{PORT}")
+
+        while True:
+            print("\nOptions:")
+            print("1. Upload a file")
+            print("2. Download a file")
+            print("3. Exit")
+            choice = input("Enter your choice: ")
+
+            if choice == "1":
+                client_socket.send(b"UPLOAD")
+                upload_file(client_socket)
+            elif choice == "2":
+                client_socket.send(b"DOWNLOAD")
+                download_file(client_socket)
+            elif choice == "3":
+                print("Exiting...")
+                break
+            else:
+                print("Invalid choice. Try again.")
+        
+        client_socket.close()
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def upload_file(client_socket):
+    filename = input("Enter full filename to upload: ")
+    if os.path.isfile(filename):
+        client_socket.send(filename.encode())  # send file name to server
+        with open(filename, 'rb') as f:
+            while chunk := f.read(1024):
+                client_socket.send(chunk)  # send file data in blocks
+        print(f"File '{filename}' uploaded successfully.")
+    else:
+        print("File not found. Please try again.")
+
+def download_file(client_socket):
+    filename = input("Enter full filename to download: ")
+    client_socket.send(filename.encode())  # request filename from server
+
+    response = client_socket.recv(1024).decode()
+    if response == "OK":
+        # To avoid overwriting, append a suffix to the downloaded file
+        downloaded_filename = f"downloaded_{filename}"
+        with open(downloaded_filename, 'wb') as f:
+            while True:
+                data = client_socket.recv(1024)
+                if not data:
+                    break
+                f.write(data)  # save file received from server
+        print(f"File '{filename}' downloaded successfully as '{downloaded_filename}'.")
+    else:
+        print(f"Error: {response}")
+
+if __name__ == "__main__":
+    connect_to_server()
+\end{lstlisting}
+
+\subsection{Server code}
+This Python code implements a simple TCP server for file transfer. It listens for incoming connections from clients and handles file uploads and downloads. Let's go through the key sections of the code to explain how it works.
+
+\begin{lstlisting}[language=Python, caption=Server code for file transfer using TCP/IP]
+import socket
+import os
+
+HOST = '0.0.0.0'  # Listen on all interfaces
+PORT = 9999    
+
+def start_server():
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind((HOST, PORT))
+    server_socket.listen(5)  # Accept max 5 devices
+    print(f"Server is listening on {HOST}:{PORT}...")
+
+    while True:
+        conn, addr = server_socket.accept()
+        print(f"Connection established with {addr}")
+
+        operation = conn.recv(1024).decode()
+        if operation == "UPLOAD":
+            handle_upload(conn) 
+        elif operation == "DOWNLOAD":
+            handle_download(conn) 
+        else:
+            conn.send(b"ERROR: Invalid operation")  
+        
+        conn.close()  # Ensure connection is closed after each operation
+
+def handle_upload(conn):
+    filename = conn.recv(1024).decode()  # Get filename from client
+    print(f"Receiving file: {filename}")
+
+    # Check if file already exists and create a new name if necessary
+    if os.path.isfile(filename):
+        # If the file exists, create a new name by appending a number
+        base_name, ext = os.path.splitext(filename)
+        counter = 1
+        new_filename = f"{base_name}_{counter}{ext}"
+        while os.path.isfile(new_filename):  # Check if the new name already exists
+            counter += 1
+            new_filename = f"{base_name}_{counter}{ext}"
+        filename = new_filename
+        print(f"File already exists. Renaming to {filename}")
+
+    # Write the received file data directly to the new file
+    with open(filename, 'wb') as f:
+        while True:
+            data = conn.recv(1024)
+            if not data:
+                break  # If no more data, stop writing
+            f.write(data)  # Write data to file
+    print(f"File '{filename}' received and saved.")
+
+def handle_download(conn):
+    filename = conn.recv(1024).decode()  # Get filename from client
+    print(f"Client requested file: {filename}")
+
+    if os.path.isfile(filename):  # Check if file exists
+        conn.send(b"OK")  
+        with open(filename, 'rb') as f:
+            while chunk := f.read(1024):  # Read file in chunks
+                conn.send(chunk)
+        print(f"File '{filename}' sent successfully.")
+    else:
+        conn.send(b"ERROR: File not found")  # Error if file doesn't exist
+        print(f"File '{filename}' not found")
+
+if __name__ == "__main__":
+    start_server()
+
+\end{lstlisting}
+
+\subsection{Testing code snippet}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\linewidth]{test.png}
+    \caption{Server command line}
+    \label{fig:test}
+\end{figure}
+
+
+\thispagestyle{empty}
+    \newpage
+
+\section{Conclusion}
+
+
+In this project, we successfully implemented a file transfer system using the TCP/IP protocol with a client-server architecture. The communication between the "Client" and "Server" components was carried out efficiently over a socket connection. The client sent the file in chunks, and the server received and stored each chunk.
+
+The key features of the system include:
+\begin{itemize}
+    \item Reliable file transfer with acknowledgment after each chunk.
+    \item Handling of file metadata, such as the file's name and size, before the transfer begins.
+    \item A clear separation of responsibilities between the client (sending the file) and the server (receiving and saving the file).
+    \item Simple error handling to handle connection issues and ensure robust transfer.
+\end{itemize}
+
+This project provided a solid understanding of how to implement a basic file transfer system using TCP/IP sockets. It gave valuable insights into the functioning of such systems and how they can be further enhanced for more complex real-world applications.
+
+\section{References}
+
+\begin{thebibliography}{99}
+    
+    \bibitem{ref1} \textit{socket — Low-level networking interface}. Retrieved from \url{https://docs.python.org/3/library/socket.html}
+    
+    \bibitem{ref2} \textit{File Transfer Protocol}. Retrieved from \url{https://en.wikipedia.org/wiki/File_Transfer_Protocol}
+
+    \bibitem{ref3} \textit{File Transfer Using TCP}. Retrieved from \url{https://www.hackingarticles.in/how-to-transfer-file-using-tcp-ip-in-python/}
+    
+
+\end{thebibliography}
+
+\end{document}
