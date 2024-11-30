@@ -11,4 +11,4 @@ Student Info
 
 * Student Name: Ha Dinh Tuan
 * Student ID: BA12-183
-* Student Group ID: Not-for-now
+* Student Group ID: 13
